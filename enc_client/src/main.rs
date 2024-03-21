@@ -17,7 +17,7 @@ use std::fs;
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
 use std::process;
-/*-----------INCLUDE STATEMENTS-----------*/
+/*-----------USE STATEMENTS-----------*/
 
 /*-----------CONSTANT DEFINITIONS-----------*/
 const CHUNK_SIZE: usize = 1000;
@@ -57,22 +57,6 @@ fn handshake(stream: &mut TcpStream) -> io::Result<()> {
     }
 }
 
-// fn send_and_receive(stream: &mut TcpStream, interleaved_buffer: &str) -> io::Result<()> {
-//     let mut offset = 0;
-//     while offset < interleaved_buffer.len() {
-//         let end = std::cmp::min(offset + CHUNK_SIZE, interleaved_buffer.len());
-//         let chunk = &interleaved_buffer[offset..end];
-//         stream.write_all(chunk.as_bytes())?;
-//         offset += CHUNK_SIZE;
-//     }
-//     // Send termination signal
-//     stream.write_all(TERMINATION_SIGNAL.as_bytes())?;
-//     let mut buffer = vec![0; CHUNK_SIZE];
-//     let n = stream.read(&mut buffer)?;
-//     buffer.truncate(n);
-//     println!("{}", String::from_utf8_lossy(&buffer));
-//     Ok(())
-// }
 fn send_and_receive(mut stream: &TcpStream, interleaved_buffer: &str) -> io::Result<()> {
     let mut offset = 0;
     let mut buffer = [0u8; CHUNK_SIZE];
@@ -117,6 +101,7 @@ fn send_and_receive(mut stream: &TcpStream, interleaved_buffer: &str) -> io::Res
 
     Ok(())
 }
+
 /*-----------UTILITY FUNCTIONS-----------*/
 
 /*-----------MAIN-----------*/

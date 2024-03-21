@@ -81,11 +81,9 @@ fn encrypt_data(data: &[u8], write_buffer: &mut [u8], mut dangling_pt_char: Opti
             let key_char = data[i + 1] as char;
             let pt_val = convert_to_num(pt_char);
             let key_val = convert_to_num(key_char);
-            if pt_val >= 0 && key_val >= 0 { // This check is implicit in your use of convert_to_num
-                let encrypted_val = (pt_val + key_val) % 27;
-                write_buffer[write_index] = convert_to_char(encrypted_val) as u8;
-                write_index += 1;
-            }
+            let encrypted_val = (pt_val + key_val) % 27;
+            write_buffer[write_index] = convert_to_char(encrypted_val) as u8;
+            write_index += 1;
             i += 2;
         } else {
             // Handle dangling character or termination character
