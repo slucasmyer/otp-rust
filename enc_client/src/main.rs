@@ -57,20 +57,64 @@ fn handshake(stream: &mut TcpStream) -> io::Result<()> {
     }
 }
 
-fn send_and_receive(stream: &mut TcpStream, interleaved_buffer: &str) -> io::Result<()> {
+// fn send_and_receive(stream: &mut TcpStream, interleaved_buffer: &str) -> io::Result<()> {
+//     let mut offset = 0;
+//     while offset < interleaved_buffer.len() {
+//         let end = std::cmp::min(offset + CHUNK_SIZE, interleaved_buffer.len());
+//         let chunk = &interleaved_buffer[offset..end];
+//         stream.write_all(chunk.as_bytes())?;
+//         offset += CHUNK_SIZE;
+//     }
+//     // Send termination signal
+//     stream.write_all(TERMINATION_SIGNAL.as_bytes())?;
+//     let mut buffer = vec![0; CHUNK_SIZE];
+//     let n = stream.read(&mut buffer)?;
+//     buffer.truncate(n);
+//     println!("{}", String::from_utf8_lossy(&buffer));
+//     Ok(())
+// }
+fn send_and_receive(mut stream: &TcpStream, interleaved_buffer: &str) -> io::Result<()> {
     let mut offset = 0;
-    while offset < interleaved_buffer.len() {
-        let end = std::cmp::min(offset + CHUNK_SIZE, interleaved_buffer.len());
-        let chunk = &interleaved_buffer[offset..end];
-        stream.write_all(chunk.as_bytes())?;
-        offset += CHUNK_SIZE;
+    let mut buffer = [0u8; CHUNK_SIZE];
+    let interleaved_length = interleaved_buffer.len();
+    let mut all_sent = false;
+    let mut chars_read = 0;
+
+    loop {
+        if offset < interleaved_length { // if there is still data to send
+            let end = std::cmp::min(offset + CHUNK_SIZE, interleaved_length); // end of the chunk
+            let chunk = &interleaved_buffer[offset..end]; // get the chunk
+            stream.write_all(chunk.as_bytes())?; // send the chunk
+            offset += CHUNK_SIZE; // move the offset
+        }
+        
+        if offset >= interleaved_length && !all_sent { //all data sent
+            stream.write_all(TERMINATION_SIGNAL.as_bytes())?; // send termination signal
+            all_sent = true; // set all_sent to true so we don't send the termination signal again
+        }
+        
+        print!("{}", String::from_utf8_lossy(&buffer[..chars_read])); // print the buffer
+        
+        buffer = [0u8; CHUNK_SIZE]; // clear buffer
+
+        chars_read = stream.read(&mut buffer)?; // read from the stream
+
+        if chars_read > 0 { // if we read something
+
+            if buffer.contains(&TERMINATION_SIGNAL.as_bytes()[0]) { // if the received data contains the termination signal
+                // print!("newline found this should fuck everything up"); // print the buffer
+                // replace the termination signal with a null byte
+                for i in 0..chars_read { // iterate through the buffer
+                    if buffer[i] == TERMINATION_SIGNAL.as_bytes()[0] { // if the current byte is the termination signal
+                        buffer[i] = 0; // replace it with a null byte
+                    }
+                }
+                println!("{}", String::from_utf8_lossy(&buffer[..chars_read-1])); // print the buffer
+                break; // break the loop
+            }
+        }
     }
-    // Send termination signal
-    stream.write_all(TERMINATION_SIGNAL.as_bytes())?;
-    let mut buffer = vec![0; CHUNK_SIZE];
-    let n = stream.read(&mut buffer)?;
-    buffer.truncate(n);
-    println!("{}", String::from_utf8_lossy(&buffer));
+
     Ok(())
 }
 /*-----------UTILITY FUNCTIONS-----------*/

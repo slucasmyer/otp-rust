@@ -1,8 +1,9 @@
 #!/bin/bash
-ABSOLUTE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BIN_PATH="${ABSOLUTE_PATH}/target/release"
 
 readonly bin="$(realpath ${1:-.})"
+
+PROJECT_PATH=$(pwd)
+
 
 readonly wd="$(mktemp -d)"
 readonly basedir="$(realpath "$(dirname "$0")")"
@@ -25,8 +26,11 @@ encport=$((RANDOM % 60000 + 1025))
 decport=$((RANDOM % 60000 + 1025))
 
 #Run the daemons
-"${BIN_PATH}"/enc_server $encport &>/dev/null &
-"${BIN_PATH}"/dec_server $decport &>/dev/null &
+# "${bin}"/enc_server $encport &>/dev/null &
+# "${bin}"/dec_server $decport &>/dev/null &
+cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin enc_server -- $encport &>/dev/null &
+cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin dec_server -- $decport &>/dev/null &
+
 sleep 1
 
 pts=0
@@ -61,7 +65,7 @@ trap cleanupkilled SIGPIPE SIGQUIT SIGABRT SIGTERM SIGINT SIGSEGV
 trap cleanup EXIT
 
 echo '#keygen 20 > key20'
-limit "${BIN_PATH}"/keygen 20 > key20
+limit cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin keygen -- 20 > key20
 tput bold; tput setaf 4; echo -n "#5 POINTS:"; tput sgr0; echo " key20 must exist"
 ((tot+=5))
 if [ -s key20 ]
@@ -88,7 +92,7 @@ echo
 echo "#-----------------------------------------"
 echo '#keygen 70000 > key70000'
 LIMIT=100000
-limit "${BIN_PATH}"/keygen 70000 > key70000
+limit cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin keygen -- 70000 > key70000
 LIMIT=500
 tput bold; tput setaf 4; echo -n "#5 POINTS:"; tput sgr0; echo " Number of characters in key70000, should be 70001:"
 ((tot+=5))
@@ -112,7 +116,7 @@ echo "#-----------------------------------------"
 echo '#enc_client plaintext1 key20 $encport'
 tput bold; tput setaf 4; echo -n "#10 POINTS:"; tput sgr0; echo " Should return error about too-short key"
 ((tot+=10))
-msg=$(limit "${BIN_PATH}"/enc_client plaintext1 key20 $encport 3>&1 1>&2 2>&3 3>&-)
+msg=$(limit cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin enc_client -- plaintext1 key20 $encport 3>&1 1>&2 2>&3 3>&-)
 printf 'stderr: %s\n' "$msg"
 if [ ! -z "$msg" ]
 then
@@ -126,11 +130,12 @@ echo "#-----------------------------------------"
 echo '#enc_client plaintext1 key70000 $encport'
 tput bold; tput setaf 4; echo -n "#20 POINTS:"; tput sgr0; echo " Should return encrypted version of plaintext1"
 ((tot+=20))
-limit "${BIN_PATH}"/enc_client plaintext1 key70000 $encport | tee ciphertext1 | paste 
+limit cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin enc_client -- plaintext1 key70000 $encport | tee ciphertext1 | paste 
 echo
 echo '#-----------------------------------------'
 echo '#enc_client plaintext1 key70000 $encport > ciphertext1'
 tput bold; tput setaf 4; echo -n "#10 POINTS:"; tput sgr0; echo " ciphertext1 must exist"
+cat ciphertext1
 ((tot+=10))
 if [ -s ciphertext1 ]; then echo 'ciphertext1 exists!'; ((pts+=10)); else echo 'ciphertext1 DOES NOT EXIST'; fi 
 echo
@@ -164,7 +169,7 @@ echo '#-----------------------------------------'
 echo '#dec_client ciphertext1 key70000 $encport'
 tput bold; tput setaf 4; echo -n '#5 POINTS:'; tput sgr0; echo ' Should fail giving error that dec_client cannot use enc_server'
 ((tot+=5))
-msg=$(limit "${BIN_PATH}"/dec_client ciphertext1 key70000 $encport 3>&1 1>&2 2>&3 3>&-)
+msg=$(limit cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin dec_client -- ciphertext1 key70000 $encport 3>&1 1>&2 2>&3 3>&-)
 printf '%s\n' "$msg"
 if [ ! -z "$msg" ]
 then
@@ -180,7 +185,7 @@ tput bold; tput setaf 4; echo -n '#20 POINTS:'; tput sgr0; echo ' should return 
 echo '#cat plaintext1'
 cat plaintext1
 echo '#dec_client ciphertext1 key70000 $decport'
-limit "${BIN_PATH}"/dec_client ciphertext1 key70000 $decport | tee output
+limit cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin dec_client -- ciphertext1 key70000 $decport | tee output
 
 if cmp plaintext1 output
 then
@@ -192,7 +197,7 @@ fi
 echo
 echo '#-----------------------------------------'
 echo '#dec_client ciphertext1 key70000 $decport > plaintext1_a'
-limit "${BIN_PATH}"/dec_client ciphertext1 key70000 $decport > plaintext1_a
+limit cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin dec_client -- ciphertext1 key70000 $decport > plaintext1_a
 tput bold; tput setaf 4; echo -n "#10 POINTS:"; tput sgr0; echo " plaintext1_a must exist"
 ((tot+=10))
 if [ -s plaintext1_a ]; then echo 'plaintext1_a exists!'; ((pts+=10)); else echo 'plaintext1_a DOES NOT EXIST'; fi
@@ -233,29 +238,29 @@ limit() {
   head -c500 < STDERR\$suffix >&2 &
   "\$@" 1>STDOUT\$suffix 2>STDERR\$suffix
 }
-limit 1 "${BIN_PATH}"/enc_client plaintext1 key70000 $encport > ciphertext1 2>&3 &
-limit 2 "${BIN_PATH}"/enc_client plaintext2 key70000 $encport > ciphertext2 2>&3 &
-limit 3 "${BIN_PATH}"/enc_client plaintext3 key70000 $encport > ciphertext3 2>&3 &
-limit 4 "${BIN_PATH}"/enc_client plaintext4 key70000 $encport > ciphertext4 2>&3 &
-limit 5 "${BIN_PATH}"/enc_client plaintext5 key70000 $encport > ciphertext5 &
+limit 1 cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin enc_client -- plaintext1 key70000 $encport > ciphertext1 2>&3 &
+limit 2 cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin enc_client -- plaintext2 key70000 $encport > ciphertext2 2>&3 &
+limit 3 cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin enc_client -- plaintext3 key70000 $encport > ciphertext3 2>&3 &
+limit 4 cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin enc_client -- plaintext4 key70000 $encport > ciphertext4 2>&3 &
+limit 5 cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin enc_client -- plaintext5 key70000 $encport > ciphertext5 &
 wait
 __CMDS__
 ret=$?
 cat empty notempty
 
-# New loop for comparing file sizes
-# wc -c ciphertext{1..4} | awk '{print $1}' > ciphertext_sizes.txt
-# wc -c plaintext{1..4} | awk '{print $1}' > plaintext_sizes.txt
-# cat ciphertext_sizes.txt plaintext_sizes.txt
-# echo "diffing"
-# diff ciphertext_sizes.txt plaintext_sizes.txt > diff.txt
-# cat diff.txt
-# echo "cmping"
-# echo cmp  <(wc -c ciphertext{1..4} | awk '{print $1}') <(wc -c plaintext{1..4} | awk '{print $1}')
-# echo "md5"
-# md5sum ciphertext{1..4} > ciphertext_md5sums.txt
-# md5sum plaintext{1..4} > plaintext_md5sums.txt
-# diff ciphertext_md5sums.txt plaintext_md5sums.txt > diff_md5sums.txt
+New loop for comparing file sizes
+wc -c ciphertext{1..4} | awk '{print $1}' > ciphertext_sizes.txt
+wc -c plaintext{1..4} | awk '{print $1}' > plaintext_sizes.txt
+cat ciphertext_sizes.txt plaintext_sizes.txt
+echo "diffing"
+diff ciphertext_sizes.txt plaintext_sizes.txt > diff.txt
+cat diff.txt
+echo "cmping"
+echo cmp  <(wc -c ciphertext{1..4} | awk '{print $1}') <(wc -c plaintext{1..4} | awk '{print $1}')
+echo "md5"
+md5sum ciphertext{1..4} > ciphertext_md5sums.txt
+md5sum plaintext{1..4} > plaintext_md5sums.txt
+diff ciphertext_md5sums.txt plaintext_md5sums.txt > diff_md5sums.txt
 # cat diff_md5sums.txt
 all_files_match=true
 for i in {1..4}; do
@@ -299,6 +304,10 @@ then
         ((pts+=5))
 else
         echo "multiple errors"
+        # print the errors
+        cat notempty
+        echo "----errors again----"
+        cat notempty
 fi
 
 echo
@@ -318,10 +327,10 @@ limit() {
   head -c500 < STDERR\$suffix >&2 &
   "\$@" 1>STDOUT\$suffix 2>STDERR\$suffix
 }
-limit 1 "${BIN_PATH}"/dec_client ciphertext1 key70000 $decport > plaintext1_a &
-limit 2 "${BIN_PATH}"/dec_client ciphertext2 key70000 $decport > plaintext2_a &
-limit 3 "${BIN_PATH}"/dec_client ciphertext3 key70000 $decport > plaintext3_a &
-limit 4 "${BIN_PATH}"/dec_client ciphertext4 key70000 $decport > plaintext4_a &
+limit 1 cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin dec_client -- ciphertext1 key70000 $decport > plaintext1_a &
+limit 2 cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin dec_client -- ciphertext2 key70000 $decport > plaintext2_a &
+limit 3 cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin dec_client -- ciphertext3 key70000 $decport > plaintext3_a &
+limit 4 cargo run --manifest-path="$PROJECT_PATH/Cargo.toml" --bin dec_client -- ciphertext4 key70000 $decport > plaintext4_a &
 wait
 __CMDS__
 ret=$?
