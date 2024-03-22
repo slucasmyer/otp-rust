@@ -26,6 +26,7 @@ use utils::{
 /*-----------USE STATEMENTS-----------*/
 
 /*-----------CONSTANT DEFINITIONS-----------*/
+const HOSTNAME: &str = "0.0.0.0";
 const HANDSHAKE_SIGNAL: &str = "$";
 const TERMINATION_SIGNAL: &str = "$";
 /*-----------CONSTANT DEFINITIONS-----------*/
@@ -41,11 +42,10 @@ fn main() {
     /*-----------CHECK ARGS-----------*/
 
     /*-----------INITIALIZE-----------*/
-    let hostname = "0.0.0.0";
     let plain = &args[1];
     let key = &args[2];
     let port = &args[3];
-    let address = format!("{}:{}", hostname, port);
+    let address = format!("{}:{}", HOSTNAME, port);
     /*-----------INITIALIZE-----------*/
 
     /*-----------READ & VALIDATE INPUT-----------*/

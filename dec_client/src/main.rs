@@ -26,6 +26,7 @@ use utils::{
 /*-----------USE STATEMENTS-----------*/
 
 /*-----------CONSTANT DEFINITIONS-----------*/
+const HOSTNAME: &str = "0.0.0.0";
 const HANDSHAKE_SIGNAL: &str = "@";
 const TERMINATION_SIGNAL: &str = "@";
 /*-----------CONSTANT DEFINITIONS-----------*/
@@ -41,16 +42,18 @@ const TERMINATION_SIGNAL: &str = "@";
     /*-----------CHECK ARGS-----------*/
 
     /*-----------INITIALIZE-----------*/
-    let hostname = "0.0.0.0";
     let cipher = &args[1];
     let key = &args[2];
     let port = &args[3];
-    let address = format!("{}:{}", hostname, port);
+    let address = format!("{}:{}", HOSTNAME, port);
     /*-----------INITIALIZE-----------*/
     
     /*-----------READ & VALIDATE INPUT-----------*/
-    let ct_buffer = read_file(&cipher).expect("Error reading ciphertext file");
-    let key_buffer = read_file(&key).expect("Error reading key file");
+    let mut ct_buffer = read_file(&cipher).expect("Error reading ciphertext file");
+    let mut key_buffer = read_file(&key).expect("Error reading key file");
+
+    ct_buffer = ct_buffer.trim_end_matches('\n').to_string();
+    key_buffer = key_buffer.trim_end_matches('\n').to_string();
 
     if key_buffer.len() < ct_buffer.len() {
         eprintln!("Error: Key is too short");
@@ -59,9 +62,11 @@ const TERMINATION_SIGNAL: &str = "@";
 
     validate_buffer(&ct_buffer).expect("Plaintext contains invalid characters");
     validate_buffer(&key_buffer).expect("Key contains invalid characters");
-
-    let mut interleaved_buffer = interleave_buffers(&ct_buffer, &key_buffer);
     /*-----------READ & VALIDATE INPUT-----------*/
+
+    /*-----------INTERLEAVE BUFFERS-----------*/
+    let mut interleaved_buffer = interleave_buffers(&ct_buffer, &key_buffer);
+    /*-----------INTERLEAVE BUFFERS-----------*/
 
     /*-----------CONNECT TO SERVER-----------*/
     let mut stream = TcpStream::connect(address).expect("Failed to connect to server");
