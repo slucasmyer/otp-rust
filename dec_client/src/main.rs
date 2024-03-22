@@ -1,3 +1,16 @@
+/**
+ * Author: Sullivan Lucas Myer
+ * -----------------------------------------
+ * Decryption client for one-time pad encryption.
+ * Reads ciphertext and key from respective files,
+ * interleaves ciphertext and key characters,
+ * and sends interleaved buffer to dec_server.
+ * Receives decrypted text back from dec_server,
+ * and writes it to stdout.
+ * Implements an application-level handshake protocol,
+ * which prevents connection to enc_server.
+ * -----------------------------------------
+ */
 
 /*-----------USE STATEMENTS-----------*/
  use std::env;
@@ -45,22 +58,6 @@ fn handshake(stream: &mut TcpStream) -> io::Result<()> {
     }
 }
 
-// fn send_and_receive(stream: &mut TcpStream, interleaved_buffer: &str) -> io::Result<()> {
-//     let mut offset = 0;
-//     while offset < interleaved_buffer.len() {
-//         let end = std::cmp::min(offset + CHUNK_SIZE, interleaved_buffer.len());
-//         let chunk = &interleaved_buffer[offset..end];
-//         stream.write_all(chunk.as_bytes())?;
-//         offset += CHUNK_SIZE;
-//     }
-//     // Send termination signal
-//     stream.write_all(TERMINATION_SIGNAL.as_bytes())?;
-//     let mut buffer = vec![0; CHUNK_SIZE];
-//     let n = stream.read(&mut buffer)?;
-//     buffer.truncate(n);
-//     println!("{}", String::from_utf8_lossy(&buffer));
-//     Ok(())
-// }
 fn send_and_receive(mut stream: &TcpStream, interleaved_buffer: &str) -> io::Result<()> {
     let mut offset = 0;
     let mut buffer = [0u8; CHUNK_SIZE];
@@ -90,7 +87,6 @@ fn send_and_receive(mut stream: &TcpStream, interleaved_buffer: &str) -> io::Res
         if chars_read > 0 { // if we read something
 
             if buffer.contains(&TERMINATION_SIGNAL.as_bytes()[0]) { // if the received data contains the termination signal
-                // print!("newline found this should fuck everything up"); // print the buffer
                 // replace the termination signal with a null byte
                 for i in 0..chars_read { // iterate through the buffer
                     if buffer[i] == TERMINATION_SIGNAL.as_bytes()[0] { // if the current byte is the termination signal

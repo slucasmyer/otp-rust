@@ -11,6 +11,7 @@
  * which prevents connection to dec_server.
  * -----------------------------------------
  */
+
 /*-----------USE STATEMENTS-----------*/
 use std::env;
 use std::fs;
@@ -31,7 +32,6 @@ fn read_file(path: &str) -> io::Result<String> {
 }
 
 fn validate_buffer(buffer: &str) -> Result<(), String> {
-    // let buffer = buffer.trim_end_matches('\n'); // Trim newline characters from the end
     for (i, b) in buffer.bytes().enumerate() {
         if !(b.is_ascii_uppercase() || b as char == ' ') {
             return Err(format!("Invalid character '{}' (byte: {}) at position {}", b as char, b, i));
@@ -86,7 +86,6 @@ fn send_and_receive(mut stream: &TcpStream, interleaved_buffer: &str) -> io::Res
         if chars_read > 0 { // if we read something
 
             if buffer.contains(&TERMINATION_SIGNAL.as_bytes()[0]) { // if the received data contains the termination signal
-                // print!("newline found this should fuck everything up"); // print the buffer
                 // replace the termination signal with a null byte
                 for i in 0..chars_read { // iterate through the buffer
                     if buffer[i] == TERMINATION_SIGNAL.as_bytes()[0] { // if the current byte is the termination signal
@@ -136,9 +135,11 @@ fn main() {
 
     validate_buffer(&pt_buffer).expect("Plaintext contains invalid characters");
     validate_buffer(&key_buffer).expect("Key contains invalid characters");
-
-    let mut interleaved_buffer = interleave_buffers(&pt_buffer, &key_buffer);
     /*-----------READ & VALIDATE INPUT-----------*/
+
+    /*-----------INTERLEAVE BUFFERS-----------*/
+    let mut interleaved_buffer = interleave_buffers(&pt_buffer, &key_buffer);
+    /*-----------INTERLEAVE BUFFERS-----------*/
 
     /*-----------CONNECT TO SERVER-----------*/
     let mut stream = TcpStream::connect(address).expect("Failed to connect to server");

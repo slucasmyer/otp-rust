@@ -1,4 +1,3 @@
-
 /**
  * Author: Sullivan Lucas Myer
  * -----------------------------------------
@@ -10,6 +9,7 @@
  * which prevents dec_client from connecting to enc_server.
  * -----------------------------------------
  */
+
 /*-----------USE STATEMENTS-----------*/
 use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -36,12 +36,12 @@ fn convert_to_char(n: i32) -> char {
     match n {
         0..=25 => (n as u8 + 'A' as u8) as char,
         26 => ' ',
-        _ => '?', // Indicate an error (shouldn't happen with valid encryption values)
+        _ => '?', // Indicate an error (shouldn't happen with valid input)
     }
 }
 
 
-fn perform_handshake(stream: &mut TcpStream) -> io::Result<()> {
+fn handshake(stream: &mut TcpStream) -> io::Result<()> {
     let mut handshake_buffer = [0; 1];
     stream.read_exact(&mut handshake_buffer)?;
 
@@ -97,12 +97,11 @@ fn encrypt_data(data: &[u8], write_buffer: &mut [u8], mut dangling_pt_char: Opti
 
     // Ensure the write_buffer is only filled up to write_index
     for idx in write_index..write_buffer.len() {
-        write_buffer[idx] = 0; // You might choose to leave as is, based on how it's used downstream
+        write_buffer[idx] = 0;
     }
 
     (dangling_pt_char, write_index)
 }
-
 
 /*-----------CHILD-----------*/
 fn handle_client(mut stream: TcpStream) {
@@ -114,7 +113,7 @@ fn handle_client(mut stream: TcpStream) {
     /*-----------INITIALIZE CHILD-----------*/
 
     /*-----------HANDSHAKE-----------*/
-    perform_handshake(&mut stream).expect("Handshake failed");
+    handshake(&mut stream).expect("Handshake failed");
     /*-----------HANDSHAKE-----------*/
 
     loop {
@@ -130,19 +129,23 @@ fn handle_client(mut stream: TcpStream) {
         };
         /*-----------READ TCP BUFFER-----------*/
 
-        
+        /*-----------ENCRYPT DATA-----------*/
         (dangling_pt_char, write_index) = encrypt_data(&read_buffer[..read_size], &mut write_buffer, dangling_pt_char);
-        
+        /*-----------ENCRYPT DATA-----------*/
 
+        /*-----------WRITE TO CLIENT-----------*/
         if let Err(_) = stream.write_all(&write_buffer[..write_index]) {
             println!("Failed to write to client");
             break;
         }
+        /*-----------WRITE TO CLIENT-----------*/
 
+        /*-----------SEND BACK TERMINATION SIGNAL-----------*/
         if read_buffer[..read_size].contains(&(TERMINATION_SIGNAL as u8)) {
             let _ = stream.write_all(TERMINATION_SIGNAL.to_string().as_bytes());
             break;
         }
+        /*-----------SEND BACK TERMINATION SIGNAL-----------*/
     }
 
 
@@ -175,5 +178,4 @@ fn main() {
         }
     }
 }
-
 /*-----------MAIN-----------*/
