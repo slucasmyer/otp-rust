@@ -13,7 +13,7 @@
  */
 
 /*-----------USE STATEMENTS-----------*/
-use std::env;
+use std::env::args;
 use std::net::TcpStream;
 use std::process::exit;
 use utils::{
@@ -34,7 +34,7 @@ const TERMINATION_SIGNAL: &str = "$";
 /*-----------MAIN-----------*/
 fn main() {
     /*-----------CHECK ARGS-----------*/
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = args().collect();
     if args.len() < 4 {
         eprintln!("USAGE: {} plaintext_file key_file port", args[0]);
         exit(1);

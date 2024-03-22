@@ -7,9 +7,10 @@
  * -----------------------------------------
  */
 use rand::Rng;
+use std::env::args;
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
+    let args: Vec<String> = args().collect();
     let length: usize = args[1].parse().unwrap_or_else(|_| panic!("Invalid length"));
     let mut rng = rand::thread_rng();
     let key: String = (0..length)

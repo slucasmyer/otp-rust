@@ -1,7 +1,8 @@
 /*-----------USE STATEMENTS-----------*/
-use std::fs;
+use std::fs::read_to_string;
 use std::io::{self, Read, Write};
 use std::net::TcpStream;
+use std::cmp::min;
 /*-----------USE STATEMENTS-----------*/
 
 /*-----------CONSTANT DEFINITIONS-----------*/
@@ -9,7 +10,7 @@ const CHUNK_SIZE: usize = 1000;
 /*-----------CONSTANT DEFINITIONS-----------*/
 
 pub fn read_file(path: &str) -> io::Result<String> {
-    fs::read_to_string(path)
+    read_to_string(path)
 }
 
 pub fn validate_buffer(buffer: &str) -> Result<(), String> {
@@ -60,7 +61,7 @@ pub fn send_and_receive(mut stream: &TcpStream, interleaved_buffer: &str, term_s
 
     loop {
         if offset < interleaved_length { // if there is still data to send
-            let end = std::cmp::min(offset + CHUNK_SIZE, interleaved_length); // end of the chunk
+            let end = min(offset + CHUNK_SIZE, interleaved_length); // end of the chunk
             let chunk = &interleaved_buffer[offset..end]; // get the chunk
             stream.write_all(chunk.as_bytes())?; // send the chunk
             offset += CHUNK_SIZE; // move the offset

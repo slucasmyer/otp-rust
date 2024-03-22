@@ -13,9 +13,9 @@
  */
 
 /*-----------USE STATEMENTS-----------*/
-use std::env;
+use std::env::args;
 use std::net::TcpStream;
-use std::process;
+use std::process::exit;
 use utils::{
     read_file,
     validate_buffer,
@@ -34,10 +34,10 @@ const TERMINATION_SIGNAL: &str = "@";
 /*-----------MAIN-----------*/
  fn main() {
     /*-----------CHECK ARGS-----------*/
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = args().collect();
     if args.len() < 4 {
         eprintln!("USAGE: {} ciphertext_file key_file port", args[0]);
-        process::exit(1);
+        exit(1);
     }
     /*-----------CHECK ARGS-----------*/
 
@@ -57,7 +57,7 @@ const TERMINATION_SIGNAL: &str = "@";
 
     if key_buffer.len() < ct_buffer.len() {
         eprintln!("Error: Key is too short");
-        process::exit(1);
+        exit(1);
     }
 
     validate_buffer(&ct_buffer).expect("Plaintext contains invalid characters");
