@@ -42,9 +42,9 @@ cargo run --bin dec_server <dec_port> &
 
 cargo run --bin keygen <key_length (must be at least as long as file to be encrypted)> > key
 
-cargo run --bin enc_client plaintext* key localhost <enc_port> > ciphertext*
+cargo run --bin enc_client plaintext* key <enc_port> > ciphertext*
 
-cargo run --bin dec_client ciphertext key localhost <dec_port> > decrypted*
+cargo run --bin dec_client ciphertext key <dec_port> > decrypted*
 ```
 
 Alternatively, you can use the provided `testing_script.sh` script to run the servers, generate keys, and invoke the clients to encrypt and decrypt the provided plaintext files.
