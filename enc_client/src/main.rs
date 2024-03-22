@@ -15,7 +15,7 @@
 /*-----------USE STATEMENTS-----------*/
 use std::env;
 use std::net::TcpStream;
-use std::process;
+use std::process::exit;
 use utils::{
     read_file,
     validate_buffer,
@@ -37,7 +37,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 4 {
         eprintln!("USAGE: {} plaintext_file key_file port", args[0]);
-        process::exit(1);
+        exit(1);
     }
     /*-----------CHECK ARGS-----------*/
 
@@ -57,7 +57,7 @@ fn main() {
 
     if key_buffer.len() < pt_buffer.len() {
         eprintln!("Error: Key is too short");
-        process::exit(1);
+        exit(1);
     }
 
     validate_buffer(&pt_buffer).expect("Plaintext contains invalid characters");
