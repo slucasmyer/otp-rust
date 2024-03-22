@@ -1,4 +1,12 @@
-use rand::Rng; // Add `rand` crate to `Cargo.toml`
+/**
+ * Author:  Sullivan Lucas Myer
+ * -----------------------------------------
+ * Generates key for one-time pad encryption.
+ * Consists of a string of random capital letters
+ * and spaces, with a newline character at the end.
+ * -----------------------------------------
+ */
+use rand::Rng;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -15,4 +23,3 @@ fn main() {
         .collect();
     println!("{}", key);
 }
-
